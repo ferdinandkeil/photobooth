@@ -43,15 +43,25 @@ class Gpio:
             self._gpio = Entities()
 
             lamp_pin = config.getInt('Gpio', 'lamp_pin')
+            flash_pin = config.getInt('Gpio', 'flash_pin')
             trigger_pin = config.getInt('Gpio', 'trigger_pin')
             exit_pin = config.getInt('Gpio', 'exit_pin')
+            startover_pin = config.getInt('Gpio', 'startover_pin')
+            startover_led = config.getInt('Gpio', 'startover_led')
+            print_pin = config.getInt('Gpio', 'print_pin')
+            print_led = config.getInt('Gpio', 'print_led')
 
             logging.info(('GPIO enabled (lamp_pin=%d, trigger_pin=%d, '
                          'exit_pin=%d)'), lamp_pin, trigger_pin, exit_pin)
 
             self._gpio.setButton(trigger_pin, self.trigger)
             self._gpio.setButton(exit_pin, self.exit)
+            self._gpio.setButton(startover_pin, self.startover)
+            self._gpio.setButton(print_pin, self.print)
             self._lamp = self._gpio.setLamp(lamp_pin)
+            self._flash = self._gpio.setFlash(flash_pin)
+            self._startover = self._gpio.setLamp(startover_led)
+            self._print = self._gpio.setLamp(print_led)
         else:
             logging.info('GPIO disabled')
 
@@ -78,12 +88,14 @@ class Gpio:
             self.showReview()
         elif isinstance(state, StateMachine.PostprocessState):
             self.showPostprocess()
+        elif isinstance(state, StateMachine.PrintingState):
+            self.showPrinting()
         elif isinstance(state, StateMachine.TeardownState):
             self.teardown(state)
 
     def teardown(self, state):
 
-        pass
+        self._gpio.flashOff(self._flash)
 
     def enableTrigger(self):
 
@@ -103,6 +115,14 @@ class Gpio:
             self.disableTrigger()
             self._comm.send(Workers.MASTER, StateMachine.GpioEvent('trigger'))
 
+    def print(self):
+
+        self._comm.send(Workers.MASTER, StateMachine.GpioEvent('print'))
+
+    def startover(self):
+
+        self._comm.send(Workers.MASTER, StateMachine.GpioEvent('idle'))
+
     def exit(self):
 
         self._comm.send(
@@ -112,6 +132,8 @@ class Gpio:
     def showIdle(self):
 
         self.enableTrigger()
+        self.showPrinting()
+        self._gpio.flashLow(self._flash)
 
     def showGreeter(self):
 
@@ -119,15 +141,15 @@ class Gpio:
 
     def showCountdown(self):
 
-        pass
+        self._gpio.flashLow(self._flash)
 
     def showCapture(self):
 
-        pass
+        self._gpio.flashFlash(self._flash)
 
     def showAssemble(self):
 
-        pass
+        self._gpio.flashLow(self._flash)
 
     def showReview(self):
 
@@ -135,7 +157,13 @@ class Gpio:
 
     def showPostprocess(self):
 
-        pass
+        self._gpio.lampOn(self._startover)
+        self._gpio.lampOn(self._print)
+
+    def showPrinting(self):
+
+        self._gpio.lampOff(self._startover)
+        self._gpio.lampOff(self._print)
 
 
 class Entities:
@@ -146,7 +174,11 @@ class Entities:
 
         import gpiozero
         self.LED = gpiozero.LED
+        self.PWMLED = gpiozero.PWMLED
         self.Button = gpiozero.Button
+
+        import subprocess
+        self.sp = subprocess
 
         self._buttons = []
         self._lamps = []
@@ -172,3 +204,24 @@ class Entities:
     def lampToggle(self, index):
 
         self._lamps[index].toggle()
+
+    def setFlash(self, bcm_pin):
+
+        self.sp.run(['gpio', '-g', 'mode', str(bcm_pin), 'pwm'])
+        self.sp.run(['gpio', 'pwm-ms'])
+        self.sp.run(['gpio', 'pwmc', '64'])
+        self.sp.run(['gpio', 'pwmr', '1023'])
+        self.sp.run(['gpio', '-g', 'pwm', str(bcm_pin), '0'])
+        return bcm_pin
+
+    def flashFlash(self, bcm_pin):
+
+        self.sp.run(['gpio', '-g', 'pwm', str(bcm_pin), '1023'])
+
+    def flashLow(self, bcm_pin):
+
+        self.sp.run(['gpio', '-g', 'pwm', str(bcm_pin), '200'])
+
+    def flashOff(self, bcm_pin):
+
+        self.sp.run(['gpio', '-g', 'pwm', str(bcm_pin), '0'])

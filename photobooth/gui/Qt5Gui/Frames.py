@@ -350,6 +350,19 @@ class PostprocessMessage(Widgets.TransparentOverlay):
         self.setLayout(layout)
 
 
+class PrintingMessage(Widgets.TransparentOverlay):
+
+    def __init__(self, parent, timeout=None, timeout_handle=None):
+
+        super().__init__(parent, timeout, timeout_handle)
+        self.setObjectName('PrintingMessage')
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(QtWidgets.QLabel('Please wait, printing...'))
+        layout.addWidget(QtWidgets.QLabel('This will take 2 min.'))
+        self.setLayout(layout)
+
+
 class SetDateTime(QtWidgets.QFrame):
 
     def __init__(self, cancel_action, restart_action):

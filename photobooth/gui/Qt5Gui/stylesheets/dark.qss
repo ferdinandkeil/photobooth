@@ -32,7 +32,9 @@ QPushButton:pressed {
 QFrame#IdleMessage {
     background-image: url(photobooth/gui/Qt5Gui/images/arrow.png);
     background-repeat: no-repeat;
-    padding: 80px 400px 120px 80px;
+    background-position: center top;
+    padding: 0px 0 200px 0px;
+    text-align: center;
 }
 
 QFrame#IdleMessage QLabel {
@@ -98,6 +100,7 @@ QFrame#CountdownMessage {
 QFrame#PoseMessage {
     background-image: url(photobooth/gui/Qt5Gui/images/camera.png);
     background-repeat: no-repeat;
+    background-position: center top;
     padding: 380px 80px 80px 80px;
 }
 
@@ -144,6 +147,7 @@ QWidget#PostprocessMessage QLabel {
 }
 
 QWidget#PostprocessMessage QPushButton {
+    border: none;
     color: #333333;
     border-color: #333333;
     margin: 20px;
@@ -157,6 +161,14 @@ QWidget#PostprocessMessage QPushButton:disabled {
     background-color: #66eeeeee;
     color: #33eeeeee;
     border-color: #33eeeeee;
+}
+
+/* Printing message */
+
+QWidget#PrintingMessage QLabel {
+    color: #333333;
+    font-size: 110px;
+    qproperty-alignment: AlignCenter;
 }
 
 /* Customizing settings */

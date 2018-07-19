@@ -223,12 +223,24 @@ class PyQt5Gui(GuiSkeleton):
     def showPostprocess(self, state):
 
         tasks = self._postprocess.get(self._picture)
+        tasks[0].action = lambda: self._comm.send(Workers.MASTER, GuiEvent('print')) # XXX ugly hack
         postproc_t = self._cfg.getInt('Photobooth', 'postprocess_time')
 
         Frames.PostprocessMessage(
             self._gui.centralWidget(), tasks,
             lambda: self._comm.send(Workers.MASTER, GuiEvent('idle')),
             postproc_t * 1000)
+
+    def showPrinting(self, state):
+
+        printing_time = self._cfg.getInt('Photobooth', 'printing_time')
+
+        Frames.PrintingMessage(
+            self._gui.centralWidget(),
+            printing_time * 1000,
+            lambda: self._comm.send(Workers.MASTER, GuiEvent('idle')))
+
+        self._postprocess.get(self._picture)[0].action() # XXX more ugly hacks
 
     def _handleKeypressEvent(self, event):
 

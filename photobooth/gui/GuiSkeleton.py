@@ -99,5 +99,7 @@ class GuiSkeleton:
             self.showReview(state)
         elif isinstance(state, StateMachine.PostprocessState):
             self.showPostprocess(state)
+        elif isinstance(state, StateMachine.PrintingState):
+            self.showPrinting(state)
         elif isinstance(state, StateMachine.TeardownState):
             self.teardown(state)
